@@ -1,49 +1,95 @@
 #!/usr/local/bin python
-import sys
-#import argparse
-import pandas as pd
-import allel #pip install scikit-allel to install this module for analysis of large scale genetic variation data
+import argparse
+import allel
 import csv
 
-# parser = argparse.ArgumentParser(description='VCFCompare V2.0')
-# parser.add_argument('-G', type=str,   required=True,  metavar='<str>',                  help="* ref.fa")
-# parser.add_argument('-Q', type=int,   required=True,  metavar='<int>',                  help="* read length")
-# parser.add_argument('-O', type=str,   required=True,  metavar='<str>',                  help="* output prefix")
+def main():
+    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='VCFCompare V1.0')
+    parser.add_argument("-t", "--truth", help="Truth VCF")
+    parser.add_argument("-q", "--query", help="Query VCF")
+    parser.add_argument("-o", "--output", help="Output CSV file")
+    args = parser.parse_args()
 
-golden_vcf = allel.vcf_to_dataframe(sys.argv[1], ['variants/CHROM', 'variants/POS', 'variants/REF', 'variants/ALT', 'QUAL'], alt_number=1) # Storing the information in the VCF file into a dataframe
-query_vcf = allel.vcf_to_dataframe(sys.argv[2], ['variants/CHROM', 'variants/POS', 'variants/REF', 'variants/ALT', 'QUAL'], alt_number=1)
-golden_variants_list = golden_vcf.values.tolist() #Each variant info will be saved onto a list, creating a list of list
-query_variants_list = query_vcf.values.tolist()
+    truth = allel.vcf_to_dataframe(args.truth, ['variants/CHROM', 'variants/POS', 'variants/REF', 'variants/ALT'], alt_number=1)
+    query = allel.vcf_to_dataframe(args.query, ['variants/CHROM', 'variants/POS', 'variants/REF', 'variants/ALT'], alt_number=1)
+    truth_list = truth.values.tolist()
+    query_list = query.values.tolist()
 
-header = ['TRUTH.TOTAL', 'TP', 'FP', 'FN', 'QUERY.TOTAL', 'Recall', 'Precision']
-list = []
+    #Output file
+    header = ['Type', 'TRUTH.TOTAL', 'TP', 'FP', 'FN', 'QUERY.TOTAL', 'Recall', 'Precision']
+    snv = []
+    indel = []
 
-#Totals
-Truth_Total = len(golden_variants_list)
-print ("Total Truth VCF records: " + str(Truth_Total))
-Truth_Pass_Total = len([x for x in golden_variants_list if x[4] > 2]) #Filter variants by quality score. Ask how what is the minimum QUAL a variant must have to get a 'PASS'
-print ("Non-reference VCF records: " + str(Truth_Pass_Total))
-Query_Total = len(query_variants_list)
-print ("Total Query VCF records: " + str(Query_Total))
-Query_Pass_Total = len([x for x in query_variants_list if x[4] > 0.003])
-print ("Non-reference VCF records: " + str(Query_Pass_Total))
+    #Truth SNVs and INDELs
+    tsnv = []
+    tindel = []
+    for variant in truth_list:
+        ref = variant[2]
+        alt = variant[3]
+        if (len(str(ref)) > 1 or len(str(alt)) > 1):
+            tindel.append(variant)
+        else:
+            tsnv.append(variant)
 
+    truthSNVs = len(tsnv)
+    truthINDELs = len(tindel)
 
-#Calls
-TP = [x for x in query_variants_list if x in golden_variants_list]
-len_TP = len(TP)
-FP = [x for x in query_variants_list if x not in golden_variants_list]
-len_FP = len(FP)
-FN = [x for x in golden_variants_list if x not in query_variants_list]
-len_FN = len(FN)
+    #Query SNVs and INDELs
+    qsnv = []
+    qindel = []
+    for variant in query_list:
+        ref = variant[2]
+        alt = variant[3]
+        if (len(str(ref)) > 1 or len(str(alt)) > 1):
+            qindel.append(variant)
+        else:
+            qsnv.append(variant)
 
-#Calculations
-Recall = len_TP/(len_TP+len_FN)
-Precision = len_TP/(len_TP+len_FP)
+    querySNVs = len(qsnv)
+    queryINDELs = len(qindel)
 
-list.extend((Truth_Total, len_TP,len_FP,len_FN, Query_Total, Recall, Precision))
+    #Totals
+    Truth_Total = len(truth_list)
+    print ("Total Truth VCF records: " + str(Truth_Total))
+    Query_Total = len(query_list)
+    print ("Total Query VCF records: " + str(Query_Total))
 
-with open("test.csv", "w", newline='') as f:
-    writer = csv.writer(f, delimiter=',')
-    writer.writerow(header)
-    writer.writerow(list)
+    #Calls, Recall, and Precision
+    #1.SNVs
+    stp = [x for x in qsnv if x in tsnv]
+    lenstp = len(stp)
+    sfp = [x for x in qsnv if x not in tsnv]
+    lensfp = len(sfp)
+    sfn = [x for x in tsnv if x not in qsnv]
+    lensfn = len(sfn)
+
+    snvRecall = lenstp/(lenstp+lensfn)
+    snvPrecision = lenstp/(lenstp+lensfp)
+
+    #2.INDELs
+    itp = [x for x in qindel if x in tindel]
+    lenitp = len(itp)
+    ifp = [x for x in qindel if x not in tindel]
+    lenifp = len(ifp)
+    ifn = [x for x in tindel if x not in qindel]
+    lenifn = len(ifn)
+
+    indelRecall = lenitp/(lenitp+lenifn)
+    indelPrecision = lenitp/(lenitp+lenifp)
+
+    snv.extend(('SNV', truthSNVs, lenstp, lensfp, lensfn, querySNVs, snvRecall, snvPrecision))
+    indel.extend(('INDEL', truthINDELs, lenitp, lenifn, lenifn, queryINDELs, indelRecall, indelPrecision))
+
+    #list.extend((Truth_Total, len_TP,len_FP,len_FN, Query_Total, Recall, Precision))
+
+    csvfile = args.output + ".csv"
+    with open(csvfile, "w", newline='') as f:
+        writer = csv.writer(f, delimiter=',')
+        writer.writerow(header)
+        writer.writerow(snv)
+        writer.writerow(indel)
+    f.close()
+
+if __name__ == '__main__':
+   main()
