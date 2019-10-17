@@ -1,4 +1,5 @@
 #!/usr/local/bin python
+import os
 import argparse
 import allel
 import csv
@@ -10,6 +11,19 @@ def main():
     parser.add_argument("-q", "--query", help="Query VCF")
     parser.add_argument("-o", "--output", help="Output CSV file")
     args = parser.parse_args()
+
+    #Error handling
+    if not args.truth:
+        raise Exception("Please specify an output prefix using -t or --truth")
+    if not args.query:
+        raise Exception("Please specify an output prefix using -q or --query ")
+    if not args.output:
+        raise Exception("Please specify an output prefix using -o or --output")
+
+    if not os.path.exists(args.truth):
+        raise Exception("Input file %s does not exist." % args.truth)
+    if not os.path.exists(args.query):
+        raise Exception("Input file %s does not exist." % args.query)
 
     truth = allel.vcf_to_dataframe(args.truth, ['variants/CHROM', 'variants/POS', 'variants/REF', 'variants/ALT'], alt_number=1)
     query = allel.vcf_to_dataframe(args.query, ['variants/CHROM', 'variants/POS', 'variants/REF', 'variants/ALT'], alt_number=1)
