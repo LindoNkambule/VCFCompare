@@ -36,16 +36,12 @@ def main():
     indel = []
 
     #Truth SNVs and INDELs
-    tsnv = []
-    tindel = []
-    fun.snvINDELlists(tsnv, tindel, truth_list)
+    tsnv, tindel = fun.snvINDELlists(truth_list)
     truthSNVs = len(tsnv)
     truthINDELs = len(tindel)
 
     #Query SNVs and INDELs
-    qsnv = []
-    qindel = []
-    fun.snvINDELlists(qsnv, qindel, query_list)
+    qsnv, qindel = fun.snvINDELlists(query_list)
     querySNVs = len(qsnv)
     queryINDELs = len(qindel)
 
