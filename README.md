@@ -15,8 +15,8 @@ In the following examples, we assume that the code has been installed to the dir
 ```bash
 $ python3 ${VCFCompare}/src/python/VCFCompare.py \
       -t example/gatk_variants.vcf \
-      -q bcftools_variants.vcf \
-      -o output
+      -q example/bcftools_variants.vcf \
+      -o test
 $ ls test.*
 test.csv
 ```
@@ -30,7 +30,7 @@ Type | TRUTH.TOTAL | TP | FP | FN | QUERY.TOTAL | Recall | Precision
 SNV | 3610 | 3573 | 538 | 37 | 4111 | 0.989750693 | 0.869131598
 INDEL | 205 | 104 | 101 | 101 | 247 | 0.507317073 | 0.421052632
 
-##Upset Plots
+## Upset Plots
 If you want to visualize the difference and intersection between the truth and query VCF files, you can use the upset.R script under src/R/
 The upset.R script runs on a set of VCFCompare.py results produced with the -o flag, as shown in the example above
 
