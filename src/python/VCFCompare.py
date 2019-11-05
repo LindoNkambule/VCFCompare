@@ -58,8 +58,12 @@ def main():
     lensfp = len(sfp)
     lensfn = len(sfn)
 
-    snvRecall = lenstp/(lenstp+lensfn)
-    snvPrecision = lenstp/(lenstp+lensfp)
+    try:
+        snvRecall = lenstp/(lenstp+lensfn)
+        snvPrecision = lenstp/(lenstp+lensfp)
+        snv.extend(('SNV', truthSNVs, lenstp, lensfp, lensfn, querySNVs, snvRecall, snvPrecision))
+    except Exception:
+        print("No SNVs were detected in one or both the files")
 
     #2.INDELs
     itp, ifp, ifn = fun.variantCalls(tindel, qindel)
@@ -67,11 +71,12 @@ def main():
     lenifp = len(ifp)
     lenifn = len(ifn)
 
-    indelRecall = lenitp/(lenitp+lenifn)
-    indelPrecision = lenitp/(lenitp+lenifp)
-
-    snv.extend(('SNV', truthSNVs, lenstp, lensfp, lensfn, querySNVs, snvRecall, snvPrecision))
-    indel.extend(('INDEL', truthINDELs, lenitp, lenifn, lenifn, queryINDELs, indelRecall, indelPrecision))
+    try:
+        indelRecall = lenitp/(lenitp+lenifn)
+        indelPrecision = lenitp/(lenitp+lenifp)
+        indel.extend(('INDEL', truthINDELs, lenitp, lenifn, lenifn, queryINDELs, indelRecall, indelPrecision))
+    except Exception:
+        print("No INDELs were detected in one or both the files")
 
     csvfile = args.output + ".csv"
     with open(csvfile, "w", newline='') as f:
