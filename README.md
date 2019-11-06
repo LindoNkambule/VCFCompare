@@ -13,12 +13,22 @@ This tool compares two variant callsets against each other and produces a CSV fi
 In the following examples, we assume that the code has been installed to the directory `${VCFCompare}`.
 
 ```bash
+#option 1 (default): look at both SNV and INDEL concordance
 $ python3 ${VCFCompare}/src/python/VCFCompare.py \
-      -t example/gatk_variants.vcf \
-      -q example/bcftools_variants.vcf \
-      -o test
+      example/gatk_variants.vcf \
+      example/bcftools_variants.vcf \
+      -out test
 $ ls test.*
 test.csv
+
+#option 2 (optional): look at either SNV or INDEL concordance
+$ python3 ${VCFCompare}/src/python/VCFCompare.py \
+      example/gatk_variants.vcf \
+      example/bcftools_variants.vcf \
+      -out test \
+      --type SNV (or INDEL)
+$ ls test.*
+test.SNV.csv (or test.INDEL.csv)
 ```
 
 The example above compares an example run of GATK 4.1.0.0 against an example run of bcftools 1.9 on the same random sample.
