@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 def vcfExtract(vcf):
     import allel
     vcfInfo = allel.vcf_to_dataframe(vcf, ['variants/CHROM', 'variants/POS', 'variants/REF', 'variants/ALT'], alt_number=1)
@@ -9,6 +11,27 @@ def vcfDFtoList(vcfdf):
     return vcfList
     #convert df to a list
 
+#for SNVs only
+def snvList(variantsList):
+    snvList = []
+    for variant in variantsList:
+        ref = len(str(variant[2]))
+        alt = len(str(variant[3]))
+        if(ref == 1 and alt == 1):
+            snvList.append(variant)
+    return snvList
+
+#for INDELs only
+def indelList(variantsList):
+    indelList = []
+    for variant in variantsList:
+        ref = len(str(variant[2]))
+        alt = len(str(variant[3]))
+        if (ref > 1 or alt > 1):
+            indelList.append(variant)
+    return indelList
+
+#for both SNVs and INDELs
 def snvINDELlists(variantsList):
     snvList = []
     indelList = []
