@@ -4,15 +4,55 @@ import argparse
 import csv
 import fun
 
-def SNVs(truth, query):
+def main():
+    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='VCFCompare V1.0')
+    parser.add_argument("-t", "--truth", help="Truth VCF")
+    parser.add_argument("-q", "--query", help="Query VCF")
+    parser.add_argument("-o", "--output", help="Output CSV file prefix")
+    args = parser.parse_args()
+
+    #Error handling
+    if not args.truth:
+        raise Exception("Please specify the truth VCF file using -t or --truth")
+    if not args.query:
+        raise Exception("Please specify the query VCF file using -q or --query ")
+    if not args.output:
+        raise Exception("Please specify an output prefix using -o or --output")
+
+    if not os.path.exists(args.truth):
+        raise Exception("Input file {} does not exist.".format(args.truth))
+    if not os.path.exists(args.query):
+        raise Exception("Input file {} does not exist.".format(args.query))
+
+    truth = fun.vcfExtract(args.truth)
+    query = fun.vcfExtract(args.query)
+    truth_list = fun.vcfDFtoList(truth)
+    query_list = fun.vcfDFtoList(query)
+
+    #Output file
+    header = ['Type', 'TRUTH.TOTAL', 'TP', 'FP', 'FN', 'QUERY.TOTAL', 'Recall', 'Precision']
     snv = []
-    #Truth and Query
-    tsnv = fun.snvList(truth)
+    indel = []
+
+    #Truth SNVs and INDELs
+    tsnv, tindel = fun.snvINDELlists(truth_list)
     truthSNVs = len(tsnv)
-    qsnv = fun.snvList(query)
+    truthINDELs = len(tindel)
+
+    #Query SNVs and INDELs
+    qsnv, qindel = fun.snvINDELlists(query_list)
     querySNVs = len(qsnv)
+    queryINDELs = len(qindel)
+
+    #Totals
+    Truth_Total = len(truth_list)
+    print ("Total Truth VCF records: {}".format(Truth_Total))
+    Query_Total = len(query_list)
+    print ("Total Query VCF records: {}".format(Query_Total))
 
     #Calls, Recall, and Precision
+    #1.SNVs
     stp, sfp, sfn = fun.variantCalls(tsnv, qsnv)
     lenstp = len(stp)
     lensfp = len(sfp)
@@ -23,18 +63,9 @@ def SNVs(truth, query):
         snvPrecision = lenstp/(lenstp+lensfp)
         snv.extend(('SNV', truthSNVs, lenstp, lensfp, lensfn, querySNVs, snvRecall, snvPrecision))
     except Exception:
-        pass
-    return snv
+        print("No SNVs were detected in one or both the files")
 
-def INDELs(truth, query):
-    indel = []
-    #Truth and Query
-    tindel = fun.indelList(truth)
-    truthINDELs = len(tindel)
-    qindel = fun.indelList(query)
-    queryINDELs = len(qindel)
-
-    #Calls, Recall, and Precision
+    #2.INDELs
     itp, ifp, ifn = fun.variantCalls(tindel, qindel)
     lenitp = len(itp)
     lenifp = len(ifp)
@@ -45,63 +76,14 @@ def INDELs(truth, query):
         indelPrecision = lenitp/(lenitp+lenifp)
         indel.extend(('INDEL', truthINDELs, lenitp, lenifn, lenifn, queryINDELs, indelRecall, indelPrecision))
     except Exception:
-        pass
-    return indel
+        print("No INDELs were detected in one or both the files")
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser = argparse.ArgumentParser(description='VCFCompare V1.0')
-    parser.add_argument("truth", help="Truth VCF") #required positional arg
-    parser.add_argument("query", help="Query VCF") #required positonal arg
-    parser.add_argument("-o", "--out", help="Output CSV file prefix") #optional arg
-    parser.add_argument("-t", "--type", help="The type of variant concordance: SNV or INDEL") #optional arg
-    args = parser.parse_args()
-
-    #Error handling
-    if not args.out:
-        raise Exception("Please specify an output prefix using -o or --output")
-
-    if not os.path.exists(args.truth):
-        raise Exception("Input truth file {} does not exist.".format(args.truth))
-    if not os.path.exists(args.query):
-        raise Exception("Input query file {} does not exist.".format(args.query))
-
-    truth = fun.vcfExtract(args.truth)
-    query = fun.vcfExtract(args.query)
-    truth_list = fun.vcfDFtoList(truth)
-    query_list = fun.vcfDFtoList(query)
-
-    #Totals
-    Truth_Total = len(truth_list)
-    print ("Total Truth VCF records: {}".format(Truth_Total))
-    Query_Total = len(query_list)
-    print ("Total Query VCF records: {}".format(Query_Total))
-
-    #Output file
-    header = ['Type', 'TRUTH.TOTAL', 'TP', 'FP', 'FN', 'QUERY.TOTAL', 'Recall', 'Precision']
-
-    if args.type == "SNV":
-        snv = SNVs(truth_list, query_list)
-
-    elif args.type == "INDEL":
-        indel = INDELs(truth_list, query_list)
-
-    else:
-        #NB!!! PARALLELIZE THE FOLOWING TWO TO SAVE SAVE
-        snv = SNVs(truth_list, query_list)
-        indel = INDELs(truth_list, query_list)
-
-    csvfile = args.out + ".csv"
+    csvfile = args.output + ".csv"
     with open(csvfile, "w", newline='') as f:
         writer = csv.writer(f, delimiter=',')
         writer.writerow(header)
-        if args.type == "SNV":
-            writer.writerow(snv)
-        elif args.type == "INDEL":
-            writer.writerow(indel)
-        else:
-            writer.writerow(snv)
-            writer.writerow(indel)
+        writer.writerow(snv)
+        writer.writerow(indel)
     f.close()
 
 if __name__ == '__main__':
