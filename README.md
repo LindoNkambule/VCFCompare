@@ -17,7 +17,7 @@ In the following examples, we assume that the code has been installed to the dir
 $ python3 ${VCFCompare}/src/python/VCFCompare.py \
       example/gatk_variants.vcf \
       example/bcftools_variants.vcf \
-      -out test
+      --out test
 $ ls test.*
 test.csv
 
@@ -25,7 +25,7 @@ test.csv
 $ python3 ${VCFCompare}/src/python/VCFCompare.py \
       example/gatk_variants.vcf \
       example/bcftools_variants.vcf \
-      -out test \
+      --out test \
       --type SNV (or INDEL)
 $ ls test.*
 test.SNV.csv (or test.INDEL.csv)
