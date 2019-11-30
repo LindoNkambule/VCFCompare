@@ -2,7 +2,7 @@
 import os
 import argparse
 import csv
-import fun
+from fun import infoExtract, createLists, concordance
 
 
 class variantSeparation:
@@ -14,13 +14,13 @@ class variantSeparation:
     def SNVs(self):
         snv = []
         # Truth and Query
-        tsnv = fun.snvList(self.truth)
+        tsnv = createLists(self.truth).snvList()
         truthSNVs = len(tsnv)
-        qsnv = fun.snvList(self.query)
+        qsnv = createLists(self.query).snvList()
         querySNVs = len(qsnv)
 
         # Calls, Recall, and Precision
-        stp, sfp, sfn = fun.variantCalls(tsnv, qsnv)
+        stp, sfp, sfn = concordance(tsnv, qsnv).variantCalls()
         lenstp = len(stp)
         lensfp = len(sfp)
         lensfn = len(sfn)
@@ -37,13 +37,13 @@ class variantSeparation:
     def INDELs(self):
         indel = []
         # Truth and Query
-        tindel = fun.indelList(self.truth)
+        tindel = createLists(self.truth).indelList()
         truthINDELs = len(tindel)
-        qindel = fun.indelList(self.query)
+        qindel = createLists(self.query).indelList()
         queryINDELs = len(qindel)
 
         # Calls, Recall, and Precision
-        itp, ifp, ifn = fun.variantCalls(tindel, qindel)
+        itp, ifp, ifn = concordance(tindel, qindel).variantCalls()
         lenitp = len(itp)
         lenifp = len(ifp)
         lenifn = len(ifn)
@@ -75,10 +75,9 @@ def main():
     if not os.path.exists(args.query):
         raise Exception("Input query file {} does not exist.".format(args.query))
 
-    truth = fun.vcfExtract(args.truth)
-    query = fun.vcfExtract(args.query)
-    truth_list = fun.vcfDFtoList(truth)
-    query_list = fun.vcfDFtoList(query)
+    truth_list = infoExtract(args.truth).alleles()
+    query_list = infoExtract(args.query).alleles()
+    
 
     # Totals
     Truth_Total = len(truth_list)
