@@ -2,59 +2,7 @@
 import os
 import argparse
 import csv
-from fun import infoExtract, createLists, concordance
-
-
-class variantSeparation:
-    def __init__(self, truth, query):
-        self.truth = truth
-        self.query = query
-
-
-    def SNVs(self):
-        snv = []
-        # Truth and Query
-        tsnv = createLists(self.truth).snvList()
-        truthSNVs = len(tsnv)
-        qsnv = createLists(self.query).snvList()
-        querySNVs = len(qsnv)
-
-        # Calls, Recall, and Precision
-        stp, sfp, sfn = concordance(tsnv, qsnv).variantCalls()
-        lenstp = len(stp)
-        lensfp = len(sfp)
-        lensfn = len(sfn)
-
-        try:
-            snvRecall = lenstp/(lenstp+lensfn)
-            snvPrecision = lenstp/(lenstp+lensfp)
-            snv.extend(('SNV', truthSNVs, lenstp, lensfp, lensfn, querySNVs, snvRecall, snvPrecision))
-        except Exception:
-            pass
-        return snv
-
-
-    def INDELs(self):
-        indel = []
-        # Truth and Query
-        tindel = createLists(self.truth).indelList()
-        truthINDELs = len(tindel)
-        qindel = createLists(self.query).indelList()
-        queryINDELs = len(qindel)
-
-        # Calls, Recall, and Precision
-        itp, ifp, ifn = concordance(tindel, qindel).variantCalls()
-        lenitp = len(itp)
-        lenifp = len(ifp)
-        lenifn = len(ifn)
-
-        try:
-            indelRecall = lenitp/(lenitp+lenifn)
-            indelPrecision = lenitp/(lenitp+lenifp)
-            indel.extend(('INDEL', truthINDELs, lenitp, lenifn, lenifn, queryINDELs, indelRecall, indelPrecision))
-        except Exception:
-            pass
-        return indel
+from fun import infoExtract, createLists, concordance, variantSeparation
 
 
 def main():
@@ -77,7 +25,7 @@ def main():
 
     truth_list = infoExtract(args.truth).alleles()
     query_list = infoExtract(args.query).alleles()
-    
+
 
     # Totals
     Truth_Total = len(truth_list)
