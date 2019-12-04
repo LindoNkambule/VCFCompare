@@ -31,10 +31,13 @@ class createLists():
     def indelList(self):
         indelList = []
         for variant in self.variantsList:
+            reference = variant[2]
+            alternative = variant[3]
             ref = len(str(variant[2]))
             alt = len(str(variant[3]))
-            if (ref > 1 or alt > 1):
-                indelList.append(variant)
+            if (type(reference) is str and type(alternative) is str):
+                if (ref > 1 or alt > 1):
+                    indelList.append(variant)
         return indelList
 
 
@@ -49,6 +52,16 @@ class createLists():
             else:
                 snvList.append(variant)
         return snvList, indelList
+
+
+    def noALT(self):
+        noALTList = []
+        for variant in self.variantsList:
+            ref = variant[2]
+            alt = variant[3]
+            if(type(ref) is float or type(alt) is float):
+                noALTList.append(variant)
+        return noALTList
 
 
 class variantSeparation:
@@ -101,7 +114,32 @@ class variantSeparation:
         except Exception:
             pass
         return indel
-        
+
+
+    def noALT(self):
+        noALT = []
+        # Truth and Query
+        tnoALT = createLists(self.truth).noALT()
+        truthnoALTs = len(tnoALT)
+        qnoALT = createLists(self.query).noALT()
+        querynoALTs = len(qnoALT)
+
+        if (truthnoALTs > 0 or querynoALTs > 0):
+            # Calls, Recall, and Precision
+            ntp, nfp, nfn, = concordance(tnoALT, qnoALT).variantCalls()
+            lenntp = len(ntp)
+            lennfp = len(nfp)
+            lennfn = len(nfn)
+
+            try:
+                noALTRecall = lenntp/(lenntp+lennfn)
+                noALTPrecision = lenntp/(lenntp+lennfp)
+                noALT.extend(('no-ALTs', truthnoALTs, lenntp, lennfp, lennfn, querynoALTs, noALTRecall, noALTPrecision))
+            except Exception:
+                pass
+            return noALT
+
+
 
 class concordance():
     def __init__(self, truth, query):

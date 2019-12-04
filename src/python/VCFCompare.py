@@ -40,14 +40,17 @@ def main():
 
     if args.type == "SNV":
         snv = variants.SNVs()
+        noalt = variants.noALT()
         csvfile = args.out + ".SNV.csv"
     elif args.type == "INDEL":
         indel = variants.INDELs()
+        noalt = variants.noALT()
         csvfile = args.out + ".INDEL.csv"
     else:
         # NB!!! PARALLELIZE THE FOLOWING TWO TO SAVE SAVE
         snv = variants.SNVs()
         indel = variants.INDELs()
+        noalt = variants.noALT()
         csvfile = args.out + ".csv"
 
     with open(csvfile, "w", newline='') as f:
@@ -55,11 +58,14 @@ def main():
         writer.writerow(header)
         if args.type == "SNV":
             writer.writerow(snv)
+            writer.writerow(noalt)
         elif args.type == "INDEL":
             writer.writerow(indel)
+            writer.writerow(noalt)
         else:
             writer.writerow(snv)
             writer.writerow(indel)
+            writer.writerow(noalt)
     f.close()
 
 
